@@ -1,6 +1,6 @@
 # Wallet Gestion
 
-Application web de gestion de portefeuilles électroniques en PHP avec base de données SQLite.
+Application web de gestion de portefeuilles électroniques en PHP avec base de données MySQL/MariaDB.
 
 ## Fonctionnalités
 
@@ -12,17 +12,64 @@ Application web de gestion de portefeuilles électroniques en PHP avec base de d
 ## Prérequis
 
 - PHP 8.1 ou supérieur
-- Extension PDO SQLite (`pdo_sqlite`)
+- Extension PDO MySQL (`pdo_mysql`)
+- MySQL 8.0+ ou MariaDB 10.5+
 - Serveur web Apache (mod_rewrite) **ou** serveur PHP intégré
 
-## Installation
+## Installation MySQL
+
+### 1. Installer et démarrer MySQL/MariaDB
+
+**macOS (Homebrew) :**
+```bash
+brew install mysql
+brew services start mysql
+```
+
+**Ubuntu/Debian :**
+```bash
+sudo apt update
+sudo apt install mysql-server
+sudo systemctl start mysql
+```
+
+### 2. Configurer les identifiants
+
+Choisissez l'une des options suivantes :
+
+**Option A — Fichier local (recommandé en développement)**
+
+```bash
+cp config/database.local.php.example config/database.local.php
+```
+
+Éditez `config/database.local.php` avec vos identifiants (host, utilisateur, mot de passe).
+
+**Option B — Variables d'environnement**
+
+```bash
+cp .env.example .env
+# Exportez les variables DB_* dans votre shell ou via votre outil de déploiement
+export DB_HOST=127.0.0.1
+export DB_PORT=3306
+export DB_NAME=wallet_gestion
+export DB_USER=root
+export DB_PASSWORD=
+```
+
+Les valeurs par défaut (sans surcharge) : `127.0.0.1:3306`, base `wallet_gestion`, utilisateur `root`, mot de passe vide.
+
+### 3. Initialiser la base de données
 
 ```bash
 cd wallet-gestion
 php setup.php
 ```
 
-Ce script crée la base SQLite `database/wallet.db` et applique le schéma.
+Ce script :
+1. Se connecte au serveur MySQL
+2. Crée la base `wallet_gestion` si elle n'existe pas
+3. Applique le schéma (`database/schema.sql`)
 
 ## Lancement
 
@@ -35,6 +82,10 @@ php -S localhost:8000 -t public public/router.php
 
 Ouvrez [http://localhost:8000](http://localhost:8000) dans votre navigateur.
 
+### Option 2 : Apache
+
+Configurez le `DocumentRoot` sur le dossier `public/`. Le fichier `public/.htaccess` redirige les requêtes vers `index.php`.
+
 ## Routes
 
 | Méthode | URL | Description |
@@ -46,10 +97,6 @@ Ouvrez [http://localhost:8000](http://localhost:8000) dans votre navigateur.
 
 Les actions POST redirigent vers `/` avec un message flash.
 
-### Option 2 : Apache
-
-Configurez le `DocumentRoot` sur le dossier `public/`. Le fichier `public/.htaccess` redirige les requêtes vers `index.php`.
-
 ## Architecture
 
 ```
@@ -58,7 +105,8 @@ wallet-gestion/
 │   ├── index.php        # Routeur + bootstrap
 │   └── css/style.css
 ├── config/
-│   └── database.php     # Configuration PDO (SQLite/MySQL)
+│   ├── database.php              # Configuration PDO MySQL
+│   └── database.local.php.example # Modèle de config locale
 ├── src/
 │   ├── Router/          # Routage GET/POST
 │   ├── Controller/      # Gestion des requêtes HTTP
@@ -70,8 +118,7 @@ wallet-gestion/
 │   ├── layout.php       # En-tête, messages flash
 │   └── index.php        # Page unique (3 sections)
 ├── database/
-│   ├── schema.sql       # Schéma SQL
-│   └── wallet.db        # Base SQLite (générée)
+│   └── schema.sql       # Schéma MySQL
 ├── bootstrap.php        # Autoloader PSR-4
 └── setup.php            # Script d'initialisation
 ```
@@ -82,15 +129,6 @@ wallet-gestion/
 2. **Controller** : reçoit la requête, appelle le service, affiche la vue
 3. **Service** : valide les règles métier, orchestre les opérations
 4. **Repository** : exécute les requêtes SQL via PDO
-
-## Configuration MySQL (optionnel)
-
-Modifiez `config/database.php` :
-
-1. Commentez la section `sqlite` et définissez `'driver' => 'mysql'`
-2. Décommentez et configurez la section `mysql`
-3. Créez la base `wallet_gestion` et adaptez `database/schema.sql` si nécessaire (types MySQL)
-4. Relancez `php setup.php`
 
 ## Règles de validation
 

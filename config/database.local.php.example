@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Copiez ce fichier vers database.local.php et adaptez vos identifiants locaux.
+ * database.local.php est ignoré par Git — ne commitez jamais de mots de passe réels.
+ */
+
+return [
+    'mysql' => [
+        'host' => '127.0.0.1',
+        'port' => 3306,
+        'database' => 'wallet_gestion',
+        'username' => 'root',
+        'password' => '',
+    ],
+];

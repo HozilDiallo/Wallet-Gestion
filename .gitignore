@@ -1,3 +1,5 @@
 database/wallet.db
+config/database.local.php
+.env
 .DS_Store
 *.log

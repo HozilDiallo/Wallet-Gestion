@@ -14,41 +14,60 @@ final class Connection
     public static function getInstance(): PDO
     {
         if (self::$instance === null) {
-            $config = require __DIR__ . '/../../config/database.php';
+            $config = self::loadConfig();
             self::$instance = self::createConnection($config);
         }
 
         return self::$instance;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public static function loadConfig(): array
+    {
+        return require __DIR__ . '/../../config/database.php';
+    }
+
+    /**
+     * Connexion au serveur MySQL sans sélectionner de base (pour la création initiale).
+     */
+    public static function createServerConnection(?array $config = null): PDO
+    {
+        $config ??= self::loadConfig();
+        $mysql = $config['mysql'];
+
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;charset=%s',
+            $mysql['host'],
+            $mysql['port'],
+            $mysql['charset']
+        );
+
+        return self::connect($dsn, $mysql['username'], $mysql['password']);
+    }
+
     private static function createConnection(array $config): PDO
     {
-        try {
-            if ($config['driver'] === 'sqlite') {
-                $path = $config['sqlite']['path'];
-                $dir = dirname($path);
-                if (!is_dir($dir)) {
-                    mkdir($dir, 0755, true);
-                }
-                $pdo = new PDO('sqlite:' . $path);
-            } else {
-                $mysql = $config['mysql'];
-                $dsn = sprintf(
-                    'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-                    $mysql['host'],
-                    $mysql['port'],
-                    $mysql['database'],
-                    $mysql['charset']
-                );
-                $pdo = new PDO($dsn, $mysql['username'], $mysql['password']);
-            }
+        $mysql = $config['mysql'];
 
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+            $mysql['host'],
+            $mysql['port'],
+            $mysql['database'],
+            $mysql['charset']
+        );
+
+        return self::connect($dsn, $mysql['username'], $mysql['password']);
+    }
+
+    private static function connect(string $dsn, string $username, string $password): PDO
+    {
+        try {
+            $pdo = new PDO($dsn, $username, $password);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-
-            if ($config['driver'] === 'sqlite') {
-                $pdo->exec('PRAGMA foreign_keys = ON');
-            }
 
             return $pdo;
         } catch (PDOException $e) {

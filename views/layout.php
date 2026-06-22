@@ -24,7 +24,7 @@
         </main>
 
         <footer>
-            Application de gestion de portefeuilles — PHP &amp; SQLite
+            Application de gestion de portefeuilles — PHP &amp; MySQL
         </footer>
     </div>
 </body>
